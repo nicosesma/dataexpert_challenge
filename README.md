@@ -19,8 +19,9 @@ A dark-themed internal web app for **El Sur Driving School** that reads student 
 3. [Environment Variables](#environment-variables)
 4. [Google Sheets API & OAuth 2.0](#google-sheets-api--oauth-20)
 5. [Student Schema](#student-schema)
-6. [Project Structure](#project-structure)
-7. [Running Tests](#running-tests)
+6. [PDF Export](#pdf-export)
+7. [Project Structure](#project-structure)
+8. [Running Tests](#running-tests)
 
 ---
 
@@ -33,8 +34,9 @@ A dark-themed internal web app for **El Sur Driving School** that reads student 
 - ✏️ Edit all 36 student fields locally (changes are not written back to the sheet)
 - ➕ Add new students (local state only)
 - ✔️ Email format validation and numeric type validation on form inputs
-- 📤 Export button (enabled when students are selected)
-- 🧪 27 unit + integration tests via Vitest
+- 📄 Export individual student records to a pre-filled PDF form
+- 🖨️ PDF preview in-modal with one-click download
+- 🧪 44 unit + integration tests via Vitest
 
 ---
 
@@ -167,6 +169,62 @@ All 36 fields map to specific columns in the Google Sheet (Column A = timestamp,
 
 ---
 
+## PDF Export
+
+Clicking **Export PDF** in a student's detail modal generates a filled copy of `assets/TEMPLATE.pdf` using [`pdf-lib`](https://pdf-lib.js.org/).
+
+### Flow
+
+1. User opens a student's detail modal
+2. User clicks **Export PDF** in the modal footer
+3. The UI POSTs the student's current state to `POST /api/export`
+4. The server loads `assets/TEMPLATE.pdf`, fills all mapped form fields, and returns the filled PDF as `application/pdf`
+5. The modal displays an embedded **PDF preview** (iframe)
+6. User clicks **Download PDF** to save the file — filename is `First Middle Last.pdf`
+
+### API Route
+
+| Route | Method | Body | Response |
+|---|---|---|---|
+| `/api/export` | POST | `Student` JSON | `application/pdf` binary |
+
+### PDF Field Mappings
+
+The following PDF form fields are populated from the student record:
+
+| PDF Field | Student Property | Notes |
+|---|---|---|
+| `Full Legal Name` | `firstName + middleName + lastName` | Space-joined, empty parts omitted |
+| `FIRST NAME` | `firstName` | |
+| `MIDDLE NAME` | `middleName` | |
+| `LAST NAME` | `lastName` | |
+| `DOB` + `Date of Birth` | `dob` | Both fields filled |
+| `Driving Permit Number or ID` | `drivingPermitNumber` | |
+| `Phone Number 1` | `phoneNumber` | |
+| `Address` | `addressStreet + addressApt` | Space-joined, apt omitted if empty |
+| `City` + `City_2` | `addressCity` | Fills both copies in template |
+| `State` + `State_2` | `addressState` | Fills both copies in template |
+| `ZIP Code` + `ZIP Code_2` | `addressZipCode` | Fills both copies in template |
+| `Printed Name of Student` (×2) | Full name | |
+| `Age` | `age` | Number converted to string |
+| `Weight` | `weight` | Number converted to string |
+| `Eyes` | `eyeColor` | |
+| `Hair` | `hairColor` | |
+| `Height` | `height` | |
+| `EMAIL` | `email` | |
+| `Place of Birth CITY` | `birthCity` | |
+| `Place of Birth COUNTRY` | `birthCountry` | |
+| `Fathers Last Name` | `fatherLastName` | |
+| `Mothers Last Name` | `motherLastName` | |
+
+> Fields not present in the template are silently skipped — `pdf-lib` field errors are caught and ignored to keep exports resilient.
+
+### Template
+
+Place the PDF form template at `assets/TEMPLATE.pdf`. The template must contain AcroForm text fields matching the names in the table above.
+
+---
+
 ## Project Structure
 
 ```
@@ -175,15 +233,19 @@ All 36 fields map to specific columns in the Google Sheet (Column A = timestamp,
 │   │   ├── auth/
 │   │   │   ├── google/route.ts      # OAuth initiation
 │   │   │   └── callback/route.ts    # OAuth callback & token exchange
-│   │   └── students/route.ts        # Google Sheets reader → Student[]
+│   │   ├── students/route.ts        # Google Sheets reader → Student[]
+│   │   └── export/route.ts          # PDF generation → application/pdf
 │   ├── types/
 │   │   └── student.ts               # Student interface (36 fields)
 │   ├── globals.css                  # Tailwind + dark theme
 │   ├── layout.tsx                   # Root layout & metadata
-│   └── page.tsx                     # Main UI (table + edit modal)
+│   └── page.tsx                     # Main UI (table + edit modal + PDF preview)
 ├── __tests__/
-│   ├── page.test.tsx                # UI tests (18)
-│   └── api.students.test.ts         # API integration tests (9)
+│   ├── page.test.tsx                # UI tests (23)
+│   ├── api.students.test.ts         # Students API integration tests (9)
+│   └── api.export.test.ts           # Export API unit tests (12)
+├── assets/
+│   └── TEMPLATE.pdf                 # PDF form template (AcroForm)
 ├── oauth2.keys.json                 # OAuth credentials (gitignored)
 ├── .env                             # Environment variables (gitignored)
 ├── vitest.config.ts                 # Vitest configuration
@@ -202,9 +264,10 @@ npm run test:run
 npm test
 ```
 
-**27 tests across 2 suites:**
+**44 tests across 3 suites:**
 
 | Suite | Tests | Coverage |
 |---|---|---|
-| `page.test.tsx` | 18 | Table render, loading/error states, selection, modal open/close, edit/save/cancel, validation, add student |
+| `page.test.tsx` | 23 | Table render, loading/error states, selection, modal open/close, edit/save/cancel, validation, add student, Export PDF button, spinner, iframe preview, download link, blob URL revocation |
 | `api.students.test.ts` | 9 | Row mapping, number parsing, null handling, row filtering, auth errors, API errors |
+| `api.export.test.ts` | 12 | Response status/headers, filename generation, PDFDocument.load, field population, address concat, apt omission, number→string conversion, null handling, error → 500 |
