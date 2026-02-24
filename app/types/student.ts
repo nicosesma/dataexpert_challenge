@@ -1,0 +1,38 @@
+export interface Student {
+  email: string;
+  lastName: string;
+  firstName: string;
+  middleName: string;
+  dob: string;
+  birthCity: string;
+  birthState: string;
+  birthCounty: string;
+  birthCountry: string;
+  addressStreet: string;
+  addressApt: string;
+  addressCounty: string;
+  addressCity: string;
+  addressState: string;
+  addressZipCode: string;
+  phoneNumber: string;
+  drivingPermitNumber: string;
+  drivingPermitState: string;
+  drivingPermitIssueDate: string;
+  drivingPermitExpireDate: string;
+  age: number | null;
+  gender: string;
+  eyeColor: string;
+  hairColor: string;
+  race: string;
+  ethnicity: string;
+  weight: number | null;
+  height: string;
+  fatherLastName: string;
+  motherLastName: string;
+  primaryContactName: string;
+  primaryContactPhone: string;
+  primaryContactAddress: string;
+  secondaryContactName: string;
+  secondaryContactPhone: string;
+  secondaryContactAddress: string;
+}
