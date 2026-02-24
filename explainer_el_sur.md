@@ -8,7 +8,7 @@ I built a small web application for my dad's business that allows a user to view
 
 ### Live URL
 
-[TBD](TBD)
+[https://dataexpert-challenge-s7tte80k5-nicosesmas-projects.vercel.app](https://dataexpert-challenge-s7tte80k5-nicosesmas-projects.vercel.app)
 
 ### Github Repo
 
