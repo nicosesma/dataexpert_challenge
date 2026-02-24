@@ -114,3 +114,23 @@ Primary Contact Address - (AH)
 Secondary Contact Name - (AI)
 Secondary Contact Phone - (AJ)
 Secondary Contact Address - (AK)
+
+## PDF Form Details
+*Use /assets/TEMPLATE.pdf*
+
+### PDF Form Fields map to state schema (PDF "Field Name" - State Schema `${Property}`)
+"Full Legal Name" - `${First Name} ${Middle Name} ${Last Name}`
+"DOB" - `${DOB}`
+"Driver License" - `${Driving Permit Number}`
+"Phone Number 1" - `${Phone Number}`
+"Address" - `${Address Street} ${Address APT}`
+"City" - `${Address City}`
+"State" - `${Address State}`
+"Zip Code" - `${Address Zip Code}`
+"Printed Name of Student" - `${First Name} ${Middle Name} ${Last Name}`
+"LAST Name" - `${Last Name}`
+"FIRST Name" - `${First Name}`
+"MIDDLE Name" - `${Middle Name}`
+"Age" - `${Age}`
+"Weight" - `${Weight}`
+"EMAIL" - `${Email}`

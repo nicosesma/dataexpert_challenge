@@ -150,14 +150,10 @@ describe("Table display", () => {
     expect(screen.getByText("2 of 2 selected")).toBeInTheDocument();
   });
 
-  it("enables the Export button when rows are selected", async () => {
+  it("does not show an Export button on the main table page", async () => {
     render(<Home />);
     await waitFor(() => screen.getByText("Maria Garcia"));
-    const exportBtn = screen.getByRole("button", { name: /export/i });
-    expect(exportBtn).toBeDisabled();
-    const checkboxes = screen.getAllByRole("checkbox");
-    await userEvent.click(checkboxes[1]);
-    expect(exportBtn).not.toBeDisabled();
+    expect(screen.queryByRole("button", { name: /export pdf/i })).not.toBeInTheDocument();
   });
 });
 
@@ -286,5 +282,89 @@ describe("Edit form", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /add student/i }));
     expect(screen.getByRole("heading", { name: "—" })).toBeInTheDocument();
+  });
+});
+
+// ─── Export PDF tests ──────────────────────────────────────────────────────
+
+describe("Export PDF", () => {
+  beforeEach(() => {
+    global.URL.createObjectURL = vi.fn(() => "blob:http://localhost/mock-pdf");
+    global.URL.revokeObjectURL = vi.fn();
+  });
+
+  it("shows Export PDF button when modal is open", async () => {
+    render(<Home />);
+    await waitFor(() => screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByText("Maria Garcia"));
+    expect(screen.getByRole("button", { name: /export pdf/i })).toBeInTheDocument();
+  });
+
+  it("shows spinner and 'Generating…' while export is in progress", async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ students: mockStudents }) })
+      .mockImplementationOnce(() => new Promise(() => {})); // export hangs
+
+    render(<Home />);
+    await waitFor(() => screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByRole("button", { name: /export pdf/i }));
+
+    expect(screen.getByText(/generating/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /generating/i })).toBeDisabled();
+  });
+
+  it("shows PDF preview iframe and Download button after successful export", async () => {
+    const mockBlob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
+
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ students: mockStudents }) })
+      .mockResolvedValueOnce({ ok: true, blob: () => Promise.resolve(mockBlob) });
+
+    render(<Home />);
+    await waitFor(() => screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByRole("button", { name: /export pdf/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTitle("PDF Preview")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /download pdf/i })).toBeInTheDocument();
+    });
+  });
+
+  it("PDF preview iframe src is the created object URL", async () => {
+    const mockBlob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
+
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ students: mockStudents }) })
+      .mockResolvedValueOnce({ ok: true, blob: () => Promise.resolve(mockBlob) });
+
+    render(<Home />);
+    await waitFor(() => screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByRole("button", { name: /export pdf/i }));
+
+    await waitFor(() => {
+      const iframe = screen.getByTitle("PDF Preview") as HTMLIFrameElement;
+      expect(iframe.src).toBe("blob:http://localhost/mock-pdf");
+    });
+  });
+
+  it("revokes the blob URL when modal is closed", async () => {
+    const mockBlob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
+
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ students: mockStudents }) })
+      .mockResolvedValueOnce({ ok: true, blob: () => Promise.resolve(mockBlob) });
+
+    render(<Home />);
+    await waitFor(() => screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByRole("button", { name: /export pdf/i }));
+
+    await waitFor(() => screen.getByTitle("PDF Preview"));
+    await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/mock-pdf");
   });
 });
