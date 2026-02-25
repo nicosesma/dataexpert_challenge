@@ -4,6 +4,18 @@ import { Student } from "@/app/types/student";
 import fs from "fs";
 import path from "path";
 
+export const runtime = "nodejs";
+
+let cachedTemplateBytes: Buffer | null = null;
+
+function getTemplateBytes(): Buffer {
+  if (!cachedTemplateBytes) {
+    const templatePath = path.join(process.cwd(), "assets", "TEMPLATE.pdf");
+    cachedTemplateBytes = fs.readFileSync(templatePath);
+  }
+  return cachedTemplateBytes;
+}
+
 function str(val: string | number | null | undefined): string {
   if (val === null || val === undefined) return "";
   return String(val);
@@ -22,9 +34,7 @@ function set(form: ReturnType<PDFDocument["getForm"]>, name: string, value: stri
 }
 
 async function fillTemplate(student: Student): Promise<Uint8Array> {
-  const templatePath = path.join(process.cwd(), "assets", "TEMPLATE.pdf");
-  const templateBytes = fs.readFileSync(templatePath);
-  const pdf = await PDFDocument.load(templateBytes);
+  const pdf = await PDFDocument.load(getTemplateBytes());
   const form = pdf.getForm();
 
   const name = fullName(student);
