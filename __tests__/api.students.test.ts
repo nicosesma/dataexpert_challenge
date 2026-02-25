@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// Pass-through mock so unstable_cache doesn't require the Next.js runtime
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
+}));
+
 // Mock @googleapis/sheets before importing the route
 vi.mock("@googleapis/sheets", () => ({
   sheets: vi.fn(),
