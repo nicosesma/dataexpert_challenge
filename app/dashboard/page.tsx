@@ -263,7 +263,8 @@ export default function Dashboard() {
                         checked={allSelected}
                         ref={(el) => { if (el) el.indeterminate = someSelected; }}
                         onChange={toggleAll}
-                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-rose-600 cursor-pointer"
+                        aria-label="Select all students"
+                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-rose-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]"
                       />
                     </th>
                     <th className="px-4 py-3 text-left font-medium text-zinc-400 uppercase tracking-wider text-xs">
@@ -288,7 +289,8 @@ export default function Dashboard() {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleRow(idx)}
-                            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-rose-600 cursor-pointer"
+                            aria-label={`Select ${fullName(student)}`}
+                            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-rose-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]"
                           />
                         </td>
                         <td
