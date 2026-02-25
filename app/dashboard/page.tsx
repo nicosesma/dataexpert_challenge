@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Student } from "@/app/types/student";
+
+type Toast = { message: string; type: "success" | "error" };
 
 const FIELD_LABELS: { key: keyof Student; label: string; type?: string }[] = [
   { key: "email", label: "Email" },
@@ -57,6 +59,17 @@ export default function Dashboard() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfFilename, setPdfFilename] = useState<string>("");
   const [exporting, setExporting] = useState(false);
+  const [toast, setToast] = useState<Toast | null>(null);
+
+  const showToast = useCallback((message: string, type: Toast["type"]) => {
+    setToast({ message, type });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   useEffect(() => {
     fetch("/api/students")
@@ -114,8 +127,10 @@ export default function Dashboard() {
         .filter(Boolean).join(" ") || "student";
       setPdfFilename(`${name}.pdf`);
       setPdfPreviewUrl(url);
+      showToast("PDF generated successfully", "success");
     } catch (e) {
       console.error(e);
+      showToast("Failed to generate PDF. Please try again.", "error");
     } finally {
       setExporting(false);
     }
@@ -431,6 +446,31 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={[
+            "fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 rounded-xl px-5 py-3 text-sm font-medium shadow-xl transition-all",
+            toast.type === "success"
+              ? "bg-emerald-600 text-white"
+              : "bg-red-600 text-white",
+          ].join(" ")}
+        >
+          {toast.type === "success" ? (
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            </svg>
+          )}
+          {toast.message}
         </div>
       )}
     </div>

@@ -367,4 +367,36 @@ describe("Export PDF", () => {
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/mock-pdf");
   });
+
+  it("shows a success toast after export completes", async () => {
+    const mockBlob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
+
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ students: mockStudents }) })
+      .mockResolvedValueOnce({ ok: true, blob: () => Promise.resolve(mockBlob) });
+
+    render(<Home />);
+    await waitFor(() => screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByRole("button", { name: /export pdf/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent(/PDF generated successfully/i);
+    });
+  });
+
+  it("shows an error toast when export fails", async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ students: mockStudents }) })
+      .mockResolvedValueOnce({ ok: false });
+
+    render(<Home />);
+    await waitFor(() => screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByText("Maria Garcia"));
+    await userEvent.click(screen.getByRole("button", { name: /export pdf/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent(/Failed to generate PDF/i);
+    });
+  });
 });
