@@ -82,9 +82,16 @@ describe("Landing page", () => {
     expect(footer).toHaveTextContent(year);
   });
 
+  it("renders a secondary 'See live student data' CTA", () => {
+    render(<LandingPage />);
+    const secondaryCta = screen.getByRole("link", { name: /see live demo data/i });
+    expect(secondaryCta).toBeInTheDocument();
+    expect(secondaryCta).toHaveAttribute("href", "/dashboard?demo=true");
+  });
+
   it("renders the live demo disclaimer below the CTA", () => {
     render(<LandingPage />);
-    expect(screen.getByText(/live demo/i)).toBeInTheDocument();
+    expect(screen.getByText(/live demo/i, { selector: "strong" })).toBeInTheDocument();
     expect(
       screen.getByText(/the Google account is already connected/i)
     ).toBeInTheDocument();
