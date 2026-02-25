@@ -188,6 +188,8 @@ Clicking **Export PDF** in a student's detail modal generates a filled copy of `
 |---|---|---|---|
 | `/api/export` | POST | `Student` JSON | `application/pdf` binary |
 
+> **Request body validation**: The export route uses [Zod](https://zod.dev) to validate the incoming `Student` payload before processing. Malformed JSON returns `400 Invalid JSON body`; schema violations return `400 Invalid request body` with a `details` field listing the failing fields.
+
 ### PDF Field Mappings
 
 The following PDF form fields are populated from the student record:

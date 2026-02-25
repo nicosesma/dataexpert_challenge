@@ -1,8 +1,47 @@
 import { PDFDocument } from "pdf-lib";
 import { NextRequest, NextResponse } from "next/server";
-import { Student } from "@/app/types/student";
+import { z } from "zod";
 import fs from "fs";
 import path from "path";
+
+const StudentSchema = z.object({
+  email: z.string(),
+  lastName: z.string(),
+  firstName: z.string(),
+  middleName: z.string(),
+  dob: z.string(),
+  birthCity: z.string(),
+  birthState: z.string(),
+  birthCounty: z.string(),
+  birthCountry: z.string(),
+  addressStreet: z.string(),
+  addressApt: z.string(),
+  addressCounty: z.string(),
+  addressCity: z.string(),
+  addressState: z.string(),
+  addressZipCode: z.string(),
+  phoneNumber: z.string(),
+  drivingPermitNumber: z.string(),
+  drivingPermitState: z.string(),
+  drivingPermitIssueDate: z.string(),
+  drivingPermitExpireDate: z.string(),
+  age: z.number().nullable(),
+  gender: z.string(),
+  eyeColor: z.string(),
+  hairColor: z.string(),
+  race: z.string(),
+  ethnicity: z.string(),
+  weight: z.number().nullable(),
+  height: z.string(),
+  fatherLastName: z.string(),
+  motherLastName: z.string(),
+  primaryContactName: z.string(),
+  primaryContactPhone: z.string(),
+  primaryContactAddress: z.string(),
+  secondaryContactName: z.string(),
+  secondaryContactPhone: z.string(),
+  secondaryContactAddress: z.string(),
+});
 
 export const runtime = "nodejs";
 
@@ -71,10 +110,27 @@ async function fillTemplate(student: Student): Promise<Uint8Array> {
   return pdf.save({ updateFieldAppearances: true });
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const student: Student = await req.json();
+type Student = z.infer<typeof StudentSchema>;
 
+export async function POST(req: NextRequest) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parsed = StudentSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+
+  const student = parsed.data;
+
+  try {
     const pdfBytes = await fillTemplate(student);
     const filename = `${fullName(student) || "student"}.pdf`;
 

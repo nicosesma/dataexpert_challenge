@@ -243,3 +243,43 @@ describe("POST /api/export", () => {
     expect(body.error).toBe("Failed to generate PDF");
   });
 });
+
+// ─── Zod input validation tests ────────────────────────────────────────────
+
+describe("POST /api/export — input validation", () => {
+  it("returns 400 for a completely empty body", async () => {
+    const req = new Request("http://localhost/api/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    const res = await POST(req as unknown as import("next/server").NextRequest);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid request body/i);
+  });
+
+  it("returns 400 when required string fields are missing", async () => {
+    const req = new Request("http://localhost/api/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "test@test.com" }),
+    });
+    const res = await POST(req as unknown as import("next/server").NextRequest);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.details).toBeDefined();
+  });
+
+  it("returns 400 for malformed JSON", async () => {
+    const req = new Request("http://localhost/api/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "not-json",
+    });
+    const res = await POST(req as unknown as import("next/server").NextRequest);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid json/i);
+  });
+});
