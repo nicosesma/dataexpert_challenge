@@ -8,7 +8,7 @@ I built a small web application for my dad's business that allows a user to view
 
 ### Live URL
 
-[https://dataexpert-challenge-m7jo7k6eo-nicosesmas-projects.vercel.app](https://dataexpert-challenge-m7jo7k6eo-nicosesmas-projects.vercel.app)
+[https://dataexpert-challenge-qgw12drh8-nicosesmas-projects.vercel.app](https://dataexpert-challenge-qgw12drh8-nicosesmas-projects.vercel.app)
 
 ##### Landing Page Screenshot
 *landing_page_el_sur.png*
