@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "El Sur Driving School Data Exporter",
-  description: "El Sur Driving School – student data viewer and exporter",
+  title: "El Sur Driving School — Data Explorer",
+  description:
+    "Manage student records from Google Sheets, edit details in real time, and export enrollment PDFs — all in one place.",
+  openGraph: {
+    title: "El Sur Driving School — Data Explorer",
+    description:
+      "Manage student records from Google Sheets, edit details in real time, and export enrollment PDFs.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

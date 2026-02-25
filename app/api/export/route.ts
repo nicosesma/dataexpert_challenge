@@ -58,7 +58,7 @@ async function fillTemplate(student: Student): Promise<Uint8Array> {
   set(form, "Fathers Last Name", str(student.fatherLastName));
   set(form, "Mothers Last Name", str(student.motherLastName));
 
-  return pdf.save();
+  return pdf.save({ updateFieldAppearances: true });
 }
 
 export async function POST(req: NextRequest) {

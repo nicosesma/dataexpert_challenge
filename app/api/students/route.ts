@@ -1,6 +1,7 @@
 import { sheets } from "@googleapis/sheets";
 import { OAuth2Client } from "google-auth-library";
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { Student } from "@/app/types/student";
 
 function parseNum(val: string | undefined): number | null {
@@ -25,22 +26,8 @@ function getOAuthClient(): OAuth2Client {
   return client;
 }
 
-export async function GET() {
-  const sheetId = process.env.GOOGLE_SHEETS_ID?.split(" ")[0];
-  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
-
-  if (!sheetId) {
-    return NextResponse.json({ error: "Missing GOOGLE_SHEETS_ID" }, { status: 500 });
-  }
-
-  if (!refreshToken) {
-    return NextResponse.json(
-      { error: "Not authorized. Visit /api/auth/google to connect your Google account." },
-      { status: 401 }
-    );
-  }
-
-  try {
+const fetchStudents = unstable_cache(
+  async (sheetId: string): Promise<Student[]> => {
     const auth = getOAuthClient();
     const sheetsClient = sheets({ version: "v4", auth });
 
@@ -52,7 +39,7 @@ export async function GET() {
     const rows = response.data.values ?? [];
     const dataRows = rows.slice(1);
 
-    const students: Student[] = dataRows
+    return dataRows
       .filter((row) => row.length > 1)
       .map((row) => ({
         email: cell(row, 1),
@@ -92,7 +79,28 @@ export async function GET() {
         secondaryContactPhone: cell(row, 35),
         secondaryContactAddress: cell(row, 36),
       }));
+  },
+  ["students"],
+  { revalidate: 60, tags: ["students"] }
+);
 
+export async function GET() {
+  const sheetId = process.env.GOOGLE_SHEETS_ID?.split(" ")[0];
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+
+  if (!sheetId) {
+    return NextResponse.json({ error: "Missing GOOGLE_SHEETS_ID" }, { status: 500 });
+  }
+
+  if (!refreshToken) {
+    return NextResponse.json(
+      { error: "Not authorized. Visit /api/auth/google to connect your Google account." },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const students = await fetchStudents(sheetId);
     return NextResponse.json({ students });
   } catch (err) {
     console.error("[students API]", err);
