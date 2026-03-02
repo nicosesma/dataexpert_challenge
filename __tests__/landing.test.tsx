@@ -1,105 +1,80 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, within } from "@testing-library/react";
-import LandingPage from "@/app/page";
+/**
+ * Root page tests — verifies that app/page.tsx re-exports the Dashboard
+ * component so the root route renders the dashboard directly (no redirect).
+ */
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import Home from "@/app/page";
 
-describe("Landing page", () => {
-  it("renders the page title", () => {
-    render(<LandingPage />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      /El Sur Driving School/i
-    );
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      /Data Explorer/i
-    );
+const mockStudents = [
+  {
+    email: "test@test.com",
+    firstName: "Test",
+    lastName: "User",
+    middleName: "",
+    dob: "01/01/2000",
+    birthCity: "Miami",
+    birthState: "FL",
+    birthCounty: "",
+    birthCountry: "USA",
+    addressStreet: "1 Main St",
+    addressApt: "",
+    addressCounty: "Miami-Dade",
+    addressCity: "Miami",
+    addressState: "FL",
+    addressZipCode: "33101",
+    phoneNumber: "3050000000",
+    drivingPermitNumber: "D0000000",
+    drivingPermitState: "FL",
+    drivingPermitIssueDate: "01/01/2022",
+    drivingPermitExpireDate: "01/01/2028",
+    age: 24,
+    gender: "Female",
+    eyeColor: "Brown",
+    hairColor: "Black",
+    race: "Hispanic",
+    ethnicity: "Hispanic",
+    weight: 120,
+    height: "5'3\"",
+    fatherLastName: "User",
+    motherLastName: "User",
+    primaryContactName: "Contact",
+    primaryContactPhone: "3050000001",
+    primaryContactAddress: "1 Main St Miami FL",
+    secondaryContactName: "",
+    secondaryContactPhone: "",
+    secondaryContactAddress: "",
+  },
+];
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  global.fetch = vi.fn().mockResolvedValue({
+    json: () => Promise.resolve({ students: mockStudents }),
+  });
+});
+
+describe("Root page (app/page.tsx)", () => {
+  it("renders the dashboard — not a landing page", async () => {
+    render(<Home />);
+    // Dashboard loading state should appear (not a landing page heading)
+    expect(screen.queryByRole("heading", { name: /data explorer/i })).not.toBeInTheDocument();
+    // Loading or student table should be present
+    await waitFor(() => {
+      expect(screen.getByText("Test User")).toBeInTheDocument();
+    });
   });
 
-  it("renders the ES logo mark in the header", () => {
-    render(<LandingPage />);
-    const logos = screen.getAllByText("ES");
-    expect(logos.length).toBeGreaterThanOrEqual(1);
+  it("shows a loading spinner while fetching students", () => {
+    global.fetch = vi.fn().mockReturnValue(new Promise(() => {}));
+    render(<Home />);
+    expect(screen.getByText(/loading students/i)).toBeInTheDocument();
   });
 
-  it("renders the school name in the header", () => {
-    render(<LandingPage />);
-    const header = screen.getByRole("banner");
-    expect(within(header).getByText("El Sur Driving School")).toBeInTheDocument();
-  });
-
-  it("renders the value-prop tagline", () => {
-    render(<LandingPage />);
-    expect(
-      screen.getByText(/Effortlessly manage student records/i)
-    ).toBeInTheDocument();
-  });
-
-  it("renders an 'Open Dashboard' CTA link pointing to /dashboard", () => {
-    render(<LandingPage />);
-    const ctaLink = screen.getByRole("link", { name: /open dashboard/i });
-    expect(ctaLink).toBeInTheDocument();
-    expect(ctaLink).toHaveAttribute("href", "/dashboard");
-  });
-
-  it("renders an 'Open App' link in the header pointing to /dashboard", () => {
-    render(<LandingPage />);
-    const headerLink = screen.getByRole("link", { name: /open app/i });
-    expect(headerLink).toBeInTheDocument();
-    expect(headerLink).toHaveAttribute("href", "/dashboard");
-  });
-
-  it("renders exactly two links that both point to /dashboard", () => {
-    render(<LandingPage />);
-    const dashboardLinks = screen
-      .getAllByRole("link")
-      .filter((el) => el.getAttribute("href") === "/dashboard");
-    expect(dashboardLinks).toHaveLength(2);
-  });
-
-  it("renders the three feature highlight cards", () => {
-    render(<LandingPage />);
-    expect(screen.getByText("Live Sheet Data")).toBeInTheDocument();
-    expect(screen.getByText("Inline Editing")).toBeInTheDocument();
-    expect(screen.getByText("PDF Export")).toBeInTheDocument();
-  });
-
-  it("renders the feature card descriptions", () => {
-    render(<LandingPage />);
-    expect(
-      screen.getByText(/Pull structured student records directly/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Open any student record, edit fields in a modal/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Generate filled enrollment PDFs/i)
-    ).toBeInTheDocument();
-  });
-
-  it("renders the footer with the school name and current year", () => {
-    render(<LandingPage />);
-    const year = new Date().getFullYear().toString();
-    const footer = screen.getByRole("contentinfo");
-    expect(footer).toHaveTextContent(/El Sur Driving School/i);
-    expect(footer).toHaveTextContent(year);
-  });
-
-  it("renders a secondary 'See live student data' CTA", () => {
-    render(<LandingPage />);
-    const secondaryCta = screen.getByRole("link", { name: /see live demo data/i });
-    expect(secondaryCta).toBeInTheDocument();
-    expect(secondaryCta).toHaveAttribute("href", "/dashboard?demo=true");
-  });
-
-  it("renders the live demo disclaimer below the CTA", () => {
-    render(<LandingPage />);
-    expect(screen.getByText(/live demo/i, { selector: "strong" })).toBeInTheDocument();
-    expect(
-      screen.getByText(/the Google account is already connected/i)
-    ).toBeInTheDocument();
-  });
-
-  it("does not render any loading spinner or student table", () => {
-    render(<LandingPage />);
-    expect(screen.queryByText(/loading students/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  it("does not render any landing page UI (no ES logo or tagline)", async () => {
+    render(<Home />);
+    await waitFor(() => screen.getByText("Test User"));
+    expect(screen.queryByText(/Effortlessly manage student records/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Open App/i)).not.toBeInTheDocument();
   });
 });

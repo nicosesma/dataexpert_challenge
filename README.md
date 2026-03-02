@@ -1,7 +1,7 @@
 # El Sur Driving School — Data Exporter
 
-**Date:** 2026-02-24
-**Branch:** `test`
+**Date:** 2026-03-02
+**Branch:** `develop`
 **Stack:** Next.js 16 · React 19 · TypeScript 5 · Tailwind CSS 4
 
 ---
@@ -36,7 +36,7 @@ A dark-themed internal web app for **El Sur Driving School** that reads student 
 - ✔️ Email format validation and numeric type validation on form inputs
 - 📄 Export individual student records to a pre-filled PDF form
 - 🖨️ PDF preview in-modal with one-click download
-- 🧪 44 unit + integration tests via Vitest
+- 🧪 51 unit + integration tests via Vitest
 
 ---
 
@@ -235,15 +235,20 @@ Place the PDF form template at `assets/TEMPLATE.pdf`. The template must contain 
 │   │   ├── auth/
 │   │   │   ├── google/route.ts      # OAuth initiation
 │   │   │   └── callback/route.ts    # OAuth callback & token exchange
+│   │   ├── health/route.ts          # Health check endpoint
 │   │   ├── students/route.ts        # Google Sheets reader → Student[]
 │   │   └── export/route.ts          # PDF generation → application/pdf
+│   ├── dashboard/
+│   │   └── page.tsx                 # Main UI (table + edit modal + PDF preview)
 │   ├── types/
 │   │   └── student.ts               # Student interface (36 fields)
 │   ├── globals.css                  # Tailwind + dark theme
 │   ├── layout.tsx                   # Root layout & metadata
-│   └── page.tsx                     # Main UI (table + edit modal + PDF preview)
+│   └── page.tsx                     # Root route — re-exports dashboard/page
 ├── __tests__/
-│   ├── page.test.tsx                # UI tests (23)
+│   ├── page.test.tsx                # Dashboard UI tests (25)
+│   ├── landing.test.tsx             # Root page smoke tests (3)
+│   ├── api.health.test.ts           # Health API tests (2)
 │   ├── api.students.test.ts         # Students API integration tests (9)
 │   └── api.export.test.ts           # Export API unit tests (12)
 ├── assets/
@@ -266,10 +271,12 @@ npm run test:run
 npm test
 ```
 
-**44 tests across 3 suites:**
+**51 tests across 5 suites:**
 
 | Suite | Tests | Coverage |
 |---|---|---|
-| `page.test.tsx` | 23 | Table render, loading/error states, selection, modal open/close, edit/save/cancel, validation, add student, Export PDF button, spinner, iframe preview, download link, blob URL revocation |
+| `page.test.tsx` | 25 | Table render, loading/error states, selection, modal open/close, edit/save/cancel, validation, add student, Export PDF button, spinner, iframe preview, download link, blob URL revocation |
+| `landing.test.tsx` | 3 | Root route renders dashboard (no landing page), loading spinner, no landing page UI |
+| `api.health.test.ts` | 2 | 200 status, valid ISO timestamp |
 | `api.students.test.ts` | 9 | Row mapping, number parsing, null handling, row filtering, auth errors, API errors |
 | `api.export.test.ts` | 12 | Response status/headers, filename generation, PDFDocument.load, field population, address concat, apt omission, number→string conversion, null handling, error → 500 |
